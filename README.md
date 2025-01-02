@@ -14,15 +14,25 @@ I componenti di un URI sono:
 - Query
 - Fragment
 
-Questa libreria, realizzata in **Prolog**, che adotta il **paradigma di programmazione logica**, mira al riconoscimento di un URI secondo una sintassi semplificata, ed alla scomposizione di questo nei componenti che lo compongono.
+Questa libreria, realizzata in **Common Lisp** (un dialetto di **Lisp**), che adotta il **paradigma di programmazione funzionale**, mira al riconoscimento di un URI secondo una sintassi semplificata, ed alla scomposizione di questo nei componenti che lo compongono.
 
 ### Utilizzo
 
-La libreria viene eseguita tramite il predicato **uri_parse/2**, che restituisce un URI scomposto a partire da una stringa contenente un URI in formato testuale; per fare ciò, viene prima riconosciuto lo schema utilizzato tramite il predicato **schema/3**, poi vengono impiegati diversi predicati, ognuno in grado di eseguire il parse di un singolo componente. 
+La libreria viene eseguita tramite la funzione **URI-PARSE**, che restituisce un **URI-STRUCT** che contiene i componenti di un URI scomposto, a partire da una stringa contenente un URI in formato testuale; per fare ciò, viene prima riconosciuto lo schema utilizzato tramite la funzione **EXTRACT-SCHEMA**, poi vengono impiegati diversi predicati, ognuno in grado di eseguire il parse di un singolo componente.
 
 A seconda dello schema utilizzato, se tra quelli speciali o quelli generali, vengono applicate regole sintattiche differenti, fino ad arrivare alla scomposizione della stringa ed alla restituzione del risultato.
 
-Sono disponibili due predicati, **uri_display/1** e **uri_display/2**, in grado di stampare su uno stream di destinazione. Nel caso di uri_display/2, lo schema deve essere passato come argomento, mentre nel caso di uri_display/1 viene usato lo stream corrente per richiamare uri_display/2.
+È disponibile una funzione per ogni componente dell'URI presente in URI-STRUCT, in grado di restituire il singolo componente dallo struct:
+
+- **URI-SCHEME**
+- **URI-USERINFO**
+- **URI-HOST**
+- **URI-PORT**
+- **URI-PATH**
+- **URI-QUERY**
+- **URI-FRAGMENT**
+
+È disponibile la funzione **URI-DISPLAY**, in grado di stampare su uno stream di destinazione. È possibile passare a questa funzione uno stream, in quel caso l'output verrà stampato sullo stream in input. Nel caso non venisse specificato uno stream, allora l'output verrà stampato sullo stream corrente.
 
 ### Valutazione
 Il progetto è stato valutato **30/30**.
