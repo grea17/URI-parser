@@ -33,6 +33,3 @@ A seconda dello schema utilizzato, se tra quelli speciali o quelli generali, ven
 - **URI-FRAGMENT**
 
 È disponibile la funzione **URI-DISPLAY**, in grado di stampare su uno stream di destinazione. È possibile passare a questa funzione uno stream, in quel caso l'output verrà stampato sullo stream in input. Nel caso non venisse specificato uno stream, allora l'output verrà stampato sullo stream corrente.
-
-### Valutazione
-Il progetto è stato valutato **30/30**.
