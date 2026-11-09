@@ -1,35 +1,86 @@
-# URI Parser
+# URI Parser — Common Lisp
 
-Un **URI** (Uniform Resource Identifier) è una stringa che identifica una risorsa univocamente, le cui caratteristiche sono descritte dalla [**RFC3986**](https://datatracker.ietf.org/doc/html/rfc3986). Per poter fare in modo che la risorsa venga correttamente riconosciuta e raggiunta, si utilizzano diversi componenti variabili che vanno a comporre un URI.
+Libreria in **Common Lisp** (paradigma **funzionale**) che riconosce un URI secondo una sintassi semplificata della [RFC 3986](https://datatracker.ietf.org/doc/html/rfc3986) e lo scompone nei suoi componenti: schema, userinfo, host, port, path, query e fragment. Per una panoramica dei concetti e per il confronto con la versione Prolog vedi il [README principale](../README.md).
 
-Il componente primario di un URI è lo **schema**, che stabilisce la sintassi che deve essere implementata; mediante schema diversi è quindi possibile identificare risorse di natura diversa, stabilendo quali componenti utilizzare e quale sintassi specifica dovrà seguire il singolo componente.
+## Avvio
 
-I componenti di un URI sono:
+```
+sbcl --load uri-parse.lisp
+```
 
-- Schema
-- Userinfo
-- Host
-- Port
-- Path
-- Query
-- Fragment
+oppure, da un REPL già aperto:
 
-Questa libreria, realizzata in **Common Lisp** (un dialetto di **Lisp**), che adotta il **paradigma di programmazione funzionale**, mira al riconoscimento di un URI secondo una sintassi semplificata, ed alla scomposizione di questo nei componenti che lo compongono.
+```lisp
+(load "uri-parse.lisp")
+```
 
-### Utilizzo
+## Utilizzo
 
-La libreria viene eseguita tramite la funzione **URI-PARSE**, che restituisce un **URI-STRUCT** che contiene i componenti di un URI scomposto, a partire da una stringa contenente un URI in formato testuale; per fare ciò, viene prima riconosciuto lo schema utilizzato tramite la funzione **EXTRACT-SCHEMA**, poi vengono impiegati diversi predicati, ognuno in grado di eseguire il parse di un singolo componente.
+La libreria si usa tramite la funzione **`URI-PARSE`**, che riceve una stringa contenente un URI e restituisce una **`URI-STRUCT`** con i componenti scomposti.
 
-A seconda dello schema utilizzato, se tra quelli speciali o quelli generali, vengono applicate regole sintattiche differenti, fino ad arrivare alla scomposizione della stringa ed alla restituzione del risultato.
+```lisp
+(defparameter *u*
+  (uri-parse "http://utente@disco.unimib.it:8080/didattica/corsi?anno#orario"))
 
-È disponibile una funzione per ogni componente dell'URI presente in URI-STRUCT, in grado di restituire il singolo componente dallo struct:
+(uri-scheme *u*)    ; => "http"
+(uri-host *u*)      ; => "disco.unimib.it"
+(uri-port *u*)      ; => 8080
+(uri-path *u*)      ; => "didattica/corsi"
 
-- **URI-SCHEME**
-- **URI-USERINFO**
-- **URI-HOST**
-- **URI-PORT**
-- **URI-PATH**
-- **URI-QUERY**
-- **URI-FRAGMENT**
+(uri-display *u*)
+; Schema:      "http"
+; Userinfo:    "utente"
+; Host:        "disco.unimib.it"
+; Port:        8080
+; Path:        "didattica/corsi"
+; Query:       "anno"
+; Fragment:    "orario"
+```
 
-È disponibile la funzione **URI-DISPLAY**, in grado di stampare su uno stream di destinazione. È possibile passare a questa funzione uno stream, in quel caso l'output verrà stampato sullo stream in input. Nel caso non venisse specificato uno stream, allora l'output verrà stampato sullo stream corrente.
+I componenti assenti valgono `NIL`; la porta, se non indicata, vale `80`.
+
+### Come funziona il parsing
+
+1. **`EXTRACT-SCHEMA`** riconosce lo schema (tutto ciò che precede il primo `:`).
+2. Se lo schema è tra quelli a sintassi speciale (`mailto`, `news`, `tel`, `fax`, `zos`) viene usato **`EXTRACT-SPECIAL-URI`**; altrimenti si applica la sintassi generica.
+3. Ogni componente è estratto da una funzione dedicata: `EXTRACT-AUTHORITY` (che a sua volta usa `EXTRACT-USERINFO`, `EXTRACT-HOST`, `EXTRACT-PORT`), `EXTRACT-PATH`, `EXTRACT-QUERY`, `EXTRACT-FRAGMENT`.
+
+### Funzioni pubbliche
+
+| Funzione                       | Descrizione                                                         |
+|--------------------------------|---------------------------------------------------------------------|
+| `(uri-parse stringa)`          | Restituisce una `uri-struct`; se l'argomento non è una stringa restituisce `NIL`. |
+| `(uri-scheme uri)`             | Schema                                                              |
+| `(uri-userinfo uri)`           | Userinfo                                                            |
+| `(uri-host uri)`               | Host                                                                |
+| `(uri-port uri)`               | Port                                                                |
+| `(uri-path uri)`               | Path                                                                |
+| `(uri-query uri)`              | Query                                                               |
+| `(uri-fragment uri)`           | Fragment                                                            |
+| `(uri-display uri [stream])`   | Stampa i componenti. Senza `stream` usa lo stream corrente.         |
+
+> **Attenzione:** se a `uri-display` si passa uno stream esplicito, la funzione lo **chiude** al termine della stampa.
+
+## Schemi a sintassi speciale
+
+| Schema       | Sintassi                                                      |
+|--------------|---------------------------------------------------------------|
+| `mailto`     | `mailto:userinfo[@host]`                                      |
+| `news`       | `news:host`                                                   |
+| `tel`, `fax` | `tel:userinfo` / `fax:userinfo`                               |
+| `zos`        | `zos://[userinfo@]host[:port]/id44[(id8)][?query][#fragment]` |
+
+Per `zos` l'`id44` e l'eventuale `id8` (tra parentesi tonde) sono sequenze di caratteri alfanumerici; l'`id44` può contenere anche il punto.
+
+## Errori
+
+Un URI non valido segnala un errore con un messaggio che indica il componente coinvolto:
+
+```lisp
+(uri-parse "http://host/a<b")
+; ERROR: invalid path character
+```
+
+## Caratteri ammessi
+
+Userinfo, host e path accettano lettere, cifre, lo spazio e `- . _ ~ [ ] ! $ & ' ( ) * + , ; =` (il path anche `/`). Query e fragment accettano in più `: / ? @`. Questo rende validi URI come `http://host/pagina?q=1&lang=it`.
